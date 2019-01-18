@@ -4,7 +4,7 @@
 #include <iostream>
 #include <random>
 
-namespace WirelessLan {
+namespace Framework {
 
 using namespace ns3;
 

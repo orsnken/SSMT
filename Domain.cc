@@ -9,12 +9,16 @@ using namespace ns3;
 namespace {
 
 ns3::WifiHelper            gWifiHelper;
-ns3::YansWifiHelper        gPhyHelper;
+ns3::YansWifiPhyHelper     gPhyHelper;
 ns3::YansWifiChannelHelper gChannelHelper;
 
 const int gChanneNumber = 1;
 
-void initHelpers() {
+} // namespace *
+
+namespace WirelessLan {
+
+void Domain::Init() {
   gWifiHelper.SetRemoteStationManager(
     "ns3::ConstantRateWifiManager",
     "DataMode"   , StringValue(kRemoteStationDataMode),
@@ -41,15 +45,11 @@ void initHelpers() {
   gPhyHelper = YansWifiPhyHelper::Default();
   gPhyHelper.SetPcapDataLinkType(kPhyPcapDlt);
   gPhyHelper.SetChannel(gChannelHelper.Create());
-  gPhyHelper.Set("EnergyDetectionThreshold", DoubleValue(kPhyEnergyThreshold));
+  gPhyHelper.Set("EnergyDetectionThreshold", DoubleValue(kPhyEnergyDetectionThreshold));
   gPhyHelper.Set("CcaMode1Threshold"       , DoubleValue(kPhyCcaMode1Threshold));
   gPhyHelper.Set("TxPowerStart"            , DoubleValue(kPhyTxPowerStart));
   gPhyHelper.Set("TxPowerEnd"              , DoubleValue(kPhyTxPowerEnd));
 }
-
-} // namespace *
-
-namespace WirelessLan {
 
 Domain::Domain(
   std::string ssid,
@@ -109,18 +109,18 @@ void Domain::ConfigureMobility(
   ns3::Vector3D base,
   double r
 ) {
-  Ptr<ListPositionAllocator> positionAp = CreateObject<ListPositionAllocator>();
-  positionAp->Add(base);
-  Ptr<ListPositionAllocator> positionStas = CreateObject<ListPositionAllocator>();
+  Ptr<ListPositionAllocator> position_ap = CreateObject<ListPositionAllocator>();
+  position_ap->Add(base);
+  Ptr<ListPositionAllocator> position_sta = CreateObject<ListPositionAllocator>();
   for (int i = 0, n = staNodes_.GetN(); i < n; i++) {
     double th = 2.0 * 3.141592 / n * i;
-    Vector3D v(r * std::cos(th), 0.0, r * std::sin(th));
-    positionStas->Add(v + base);
+    Vector3D v(r * std::cos(th), r * std::sin(th), 0.0);
+    position_sta->Add(v + base);
   }
   MobilityHelper mobility;
-  mobility.SetPositionAllocator(positionAp);
+  mobility.SetPositionAllocator(position_ap);
   mobility.Install(apNodes_);
-  mobility.SetPositionAllocator(positionStas);
+  mobility.SetPositionAllocator(position_sta);
   mobility.Install(staNodes_);
 }
 

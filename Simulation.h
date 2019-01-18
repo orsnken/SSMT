@@ -11,6 +11,7 @@ public:
   void Run();
     // USER DEFINE
   
+  void Setup();
   void SetSeed(int seed);
   void SetRunNumber(int run);
 private:

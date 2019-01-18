@@ -10,6 +10,8 @@ namespace WirelessLan {
 
 class Domain {
 public:
+  static void Init();
+
   Domain(
     std::string ssid,
     std::string network_addr,
