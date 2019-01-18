@@ -1,7 +1,6 @@
 #include "ns3.h"
-
-#include "PhyParameters.h"
 #include "Domain.h"
+#include "PhyParameters.h"
 
 #include <cmath>
 
