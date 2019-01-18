@@ -1,3 +1,4 @@
+#include "ns3.h"
 #include "PhyParameters.h"
 
 namespace WirelessLan {
