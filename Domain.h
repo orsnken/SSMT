@@ -29,10 +29,11 @@ public:
     double radius
   );
 
-  ns3::Ptr<ns3::Node> GetApNode();
+  ns3::Ptr<ns3::Node> GetApNode() const;
 
-  ns3::Ptr<ns3::Node> GetStaNode(int index);
+  ns3::Ptr<ns3::Node> GetStaNode(int index) const;
 
+  int GetN() const;
 private:
   int ch_;
   std::string naddr_;
@@ -48,12 +49,16 @@ private:
 // inline functions
 // ------------------------------------------------
 
-inline ns3::Ptr<ns3::Node> Domain::GetApNode() {
+inline ns3::Ptr<ns3::Node> Domain::GetApNode() const {
   return apNodes_.Get(0);
 }
 
-inline ns3::Ptr<ns3::Node> Domain::GetStaNode(int index) {
+inline ns3::Ptr<ns3::Node> Domain::GetStaNode(int index) const {
   return staNodes_.Get(index);
+}
+
+inline int Domain::GetN() const {
+  return apNodes_.GetN() + staNodes_.GetN();
 }
 
 // ------------------------------------------------
