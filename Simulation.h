@@ -1,5 +1,5 @@
-#ifndef WIRELESS_LAN_SIMULATION_H__
-#define WIRELESS_LAN_SIMULATION_H__
+#ifndef INCLUDED_WIRELESS_LAN_SIMULATION_H__
+#define INCLUDED_WIRELESS_LAN_SIMULATION_H__
 
 namespace Framework {
 
@@ -23,4 +23,4 @@ private:
 
 #include "SimulationImpl.h"
 
-#endif // WIRELESS_LAN_SIMULATION_H__
+#endif // INCLUDED_WIRELESS_LAN_SIMULATION_H__

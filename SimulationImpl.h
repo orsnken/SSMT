@@ -1,5 +1,5 @@
-#ifndef WIRELESS_LAN_SIMULATION_IMPL_H__
-#define WIRELESS_LAN_SIMULATION_IMPL_H__
+#ifndef INCLUDED_WIRELESS_LAN_SIMULATION_IMPL_H__
+#define INCLUDED_WIRELESS_LAN_SIMULATION_IMPL_H__
 
 #include "Simulation.h"
 
@@ -15,4 +15,4 @@ inline void Simulation::SetRunNumber(int run) {
 
 } // namespace Framework
 
-#endif // WIRELESS_LAN_SIMULATION_IMPL_H__
+#endif // INCLUDED_WIRELESS_LAN_SIMULATION_IMPL_H__

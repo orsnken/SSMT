@@ -1,5 +1,5 @@
-#ifndef WIRELESS_LAN_PHY_PARAMETERS_H__
-#define WIRELESS_LAN_PHY_PARAMETERS_H__
+#ifndef INCLUDED_WIRELESS_LAN_PHY_PARAMETERS_H__
+#define INCLUDED_WIRELESS_LAN_PHY_PARAMETERS_H__
 
 #include "ns3.h"
 
@@ -76,7 +76,7 @@ static const double kLogDistancePropagationLossReferenceDistance = 1.0;
   // Reference distance for Log Distance Propagation Loss Model.
   // Recommend -> 1.0
 
-static const double kLogDistancePropagationLossReferenceLoss = 40.45997;
+static const double kLogDistancePropagationLossReferenceLoss = 40.045997;
   // Reference loss for Log Distance Propagation Loss Model.
   // Recommend -> 40.045997
 // ------------------------------------------------
@@ -87,12 +87,12 @@ static const double kLogDistancePropagationLossReferenceLoss = 40.45997;
 // ------------------------------------------------
 static const double kNakagamiPropagationLossDistance1 = 80.0;
 static const double kNakagamiPropagationLossDistance2 = 200.0;
-static const double kNakagamiPropagationLossM0 = 1.0;
-static const double kNakagamiPropagationLossM1 = 1.0;
-static const double kNakagamiPropagationLossM2 = 1.0;
+static const double kNakagamiPropagationLossM0 = 3.00;
+static const double kNakagamiPropagationLossM1 = 0.75;
+static const double kNakagamiPropagationLossM2 = 0.75;
 // ------------------------------------------------
 
 
 } // namesapce WirelessLan
 
-#endif // WIRELESS_LAN_PHY_PARAMETERS_H__
+#endif // INCLUDED_WIRELESS_LAN_PHY_PARAMETERS_H__

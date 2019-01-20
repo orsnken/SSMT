@@ -1,6 +1,7 @@
 #include "ns3.h"
 #include "Domain.h"
 #include "PhyParameters.h"
+#include "WifiCeHelper.h"
 
 #include <cmath>
 
@@ -8,7 +9,7 @@ using namespace ns3;
 
 namespace {
 
-ns3::WifiHelper            gWifiHelper;
+ns3::WifiCeHelper          gWifiCeHelper;
 ns3::YansWifiPhyHelper     gPhyHelper;
 ns3::YansWifiChannelHelper gChannelHelper;
 
@@ -19,12 +20,12 @@ const int gChanneNumber = 1;
 namespace WirelessLan {
 
 void Domain::Init() {
-  gWifiHelper.SetRemoteStationManager(
+  gWifiCeHelper.SetRemoteStationManager(
     "ns3::ConstantRateWifiManager",
     "DataMode"   , StringValue(kRemoteStationDataMode),
     "ControlMode", StringValue(kRemoteStationControlMode)
   );
-  gWifiHelper.SetStandard(kWifiPhyStandard);
+  gWifiCeHelper.SetStandard(kWifiPhyStandard);
 
   gChannelHelper.SetPropagationDelay("ns3::ConstantSpeedPropagationDelayModel");
   gChannelHelper.AddPropagationLoss(
@@ -65,18 +66,18 @@ Domain::Domain(
 
   WifiMacHelper mac_sta;
   mac_sta.SetType(
-    "ns3::StaWifiMac",
+    "ns3::SsmtStaWifiMac",
     "ActiveProbing", BooleanValue(false),
     "Ssid", SsidValue(ssid_)
   );
-  staDevs_ = gWifiHelper.Install(gPhyHelper, mac_sta, staNodes_);
+  staDevs_ = gWifiCeHelper.Install(gPhyHelper, mac_sta, staNodes_);
 
   WifiMacHelper mac_ap;
   mac_ap.SetType(
-    "ns3::ApWifiMac",
+    "ns3::SsmtApWifiMac",
     "Ssid", SsidValue(ssid_)
   );
-  apDevs_ = gWifiHelper.Install(gPhyHelper, mac_ap, apNodes_);
+  apDevs_ = gWifiCeHelper.Install(gPhyHelper, mac_ap, apNodes_);
 
   InternetStackHelper stack;
   stack.Install(apNodes_);

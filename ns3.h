@@ -1,5 +1,5 @@
-#ifndef USER_NS3_H__
-#define USER_NS3_H__
+#ifndef INCLUDED_USER_NS3_H__
+#define INCLUDED_USER_NS3_H__
 
 #include "ns3/applications-module.h"
 #include "ns3/core-module.h"
@@ -17,4 +17,4 @@
 #include "ns3/wifi-mac-queue.h"
 #include "ns3/yans-wifi-channel.h"
 
-#endif // USER_NS3_H__
+#endif // INCLUDED_USER_NS3_H__
