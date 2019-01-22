@@ -64,6 +64,13 @@ Domain::Domain(
 
   gPhyHelper.Set("ChannelNumber", UintegerValue(gChanneNumber));
 
+  WifiMacHelper mac_ap;
+  mac_ap.SetType(
+    "ns3::SsmtApWifiMac",
+    "Ssid", SsidValue(ssid_)
+  );
+  apDevs_ = gWifiCeHelper.Install(gPhyHelper, mac_ap, apNodes_);
+
   WifiMacHelper mac_sta;
   mac_sta.SetType(
     "ns3::SsmtStaWifiMac",
@@ -71,13 +78,6 @@ Domain::Domain(
     "Ssid", SsidValue(ssid_)
   );
   staDevs_ = gWifiCeHelper.Install(gPhyHelper, mac_sta, staNodes_);
-
-  WifiMacHelper mac_ap;
-  mac_ap.SetType(
-    "ns3::SsmtApWifiMac",
-    "Ssid", SsidValue(ssid_)
-  );
-  apDevs_ = gWifiCeHelper.Install(gPhyHelper, mac_ap, apNodes_);
 
   InternetStackHelper stack;
   stack.Install(apNodes_);
