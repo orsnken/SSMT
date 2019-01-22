@@ -23,7 +23,13 @@ public:
   virtual void NotifyCollision();
 
   // @Override
+  virtual void NotifyInternalCollision();
+
+  // @Override
   virtual void EndTxNoAck();
+
+  // @Oveeride
+  virtual void DoDispose();
 private:
   int numf_;
   double trr_;

@@ -13,17 +13,26 @@
 
 #include <cmath>
 
+#undef  NS_LOG_APPEND_CONTEXT
+#define NS_LOG_APPEND_CONTEXT if (m_low != 0) { std::clog << "[mac=" << m_low->GetAddress () << "] "; }
+
+
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE("SsmtTxop");
 NS_OBJECT_ENSURE_REGISTERED(SsmtTxop);
 
-SsmtTxop::SsmtTxop() : numf_(0), trr_(0.2), trr_c_(0.8) {
+SsmtTxop::SsmtTxop() : numf_(0), trr_(1.0), trr_c_(0.0) {
   NS_LOG_FUNCTION(this);
 }
 
 SsmtTxop::~SsmtTxop() {
   NS_LOG_FUNCTION(this);
+}
+
+void SsmtTxop::DoDispose() {
+  NS_LOG_FUNCTION(this);
+  Txop::DoDispose();
 }
 
 void SsmtTxop::MissedCts () {
@@ -104,6 +113,13 @@ void SsmtTxop::NotifyCollision() {
   StartBackoffNow (m_rng->GetInteger (0, GetCw ()));
   RestartAccessIfNeeded ();
 }
+
+void SsmtTxop::NotifyInternalCollision() {
+  NS_LOG_FUNCTION (this);
+  NS_LOG_WARN ("NotifyInternalCollision");
+  NotifyCollision();
+}
+
 
 void SsmtTxop::EndTxNoAck () {
   NS_LOG_FUNCTION (this);
