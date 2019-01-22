@@ -9,6 +9,9 @@ class SsmtRegularWifiMac : public RegularWifiMac {
 public:
   SsmtRegularWifiMac();
   virtual ~SsmtRegularWifiMac();
+  
+  //@Override
+  virtual void DoDispose();
 protected:
   // @Override
   virtual void TxOk (const WifiMacHeader &hdr) {
@@ -19,6 +22,9 @@ protected:
   virtual void TxFailed (const WifiMacHeader &hdr) {
     RegularWifiMac::TxFailed(hdr);
   }
+
+private:
+  Ptr<Txop> parent_txop_expired_;
 };
 
 }

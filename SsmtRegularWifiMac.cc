@@ -22,8 +22,11 @@ NS_OBJECT_ENSURE_REGISTERED(SsmtRegularWifiMac);
 
 SsmtRegularWifiMac::SsmtRegularWifiMac() : RegularWifiMac() {
   NS_LOG_FUNCTION (this);
-  m_txop->Dispose();
-  m_txop = 0;
+  // m_txop->Dispose();
+  // m_txop = 0;
+
+  parent_txop_expired_ = m_txop;
+    // To use SsmtTxop, remove parent txop. 
 
   m_txop = CreateObject<SsmtTxop> ();
   m_txop->SetMacLow(m_low);
@@ -36,6 +39,13 @@ SsmtRegularWifiMac::SsmtRegularWifiMac() : RegularWifiMac() {
 
 SsmtRegularWifiMac::~SsmtRegularWifiMac() {
   NS_LOG_FUNCTION (this);
+}
+
+void SsmtRegularWifiMac::DoDispose() {
+  NS_LOG_FUNCTION(this);
+  parent_txop_expired_->Dispose();
+  parent_txop_expired_ = 0;
+  RegularWifiMac::DoDispose();
 }
 
 } // namespace ns3
