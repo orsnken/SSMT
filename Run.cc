@@ -90,21 +90,23 @@ void Framework::Simulation::Init(int argc, char* argv[]) {
 void Framework::Simulation::Run() {
   std::cout << "Hello world!" << std::endl;
 
-  Domain network1("Network 1", "192.168.1.0", "255.255.255.0", 2);
+  const double distance = 15.0;
+
+  Domain network1("Network 1", "192.168.1.0", "255.255.255.0", 1);
   network1.ConfigureMobility(Vector3D(0.0, 0.0, 0.0), 0.5);
   SetApplication(network1, 1001, 0.1, 4.9);
 
   Domain network2("Network 2", "192.168.2.0", "255.255.255.0", 1);
-  network2.ConfigureMobility(Vector3D(15.0, 0.0, 0.0), 0.5);
+  network2.ConfigureMobility(Vector3D(distance, 0.0, 0.0), 0.5);
   SetApplication(network2, 2001, 0.1, 4.9);
 
-  Domain network3("Network 3", "192.168.3.0", "255.255.255.0", 1);
-  network3.ConfigureMobility(Vector3D(0.0, 15.0, 0.0), 0.5);
-  SetApplication(network3, 3001, 0.1, 4.9);
+  // Domain network3("Network 3", "192.168.3.0", "255.255.255.0", 1);
+  // network3.ConfigureMobility(Vector3D(distance / 2.0, distance / 2.0 * 1.7320508, 0.0), 0.5);
+  // SetApplication(network3, 3001, 0.1, 4.9);
 
-  Domain network4("Network 4", "192.168.4.0", "255.255.255.0", 2);
-  network4.ConfigureMobility(Vector3D(15.0, 15.0, 0.0), 0.5);
-  SetApplication(network4, 4001, 0.1, 4.9);
+  // Domain network4("Network 4", "192.168.4.0", "255.255.255.0", 2);
+  // network4.ConfigureMobility(Vector3D(15.0, 15.0, 0.0), 0.5);
+  // SetApplication(network4, 4001, 0.1, 4.9);
 
   // Domain network5("Network 5", "192.168.5.0", "255.255.255.0", 1);
   // network5.ConfigureMobility(Vector3D(20.0, 0.0, 0.0), 0.5);

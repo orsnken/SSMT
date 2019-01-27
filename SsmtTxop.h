@@ -33,7 +33,8 @@ public:
 private:
   int numf_;
   double trr_;
-  double trr_c_;
+  double trr_alpha_;
+  double trr_phi_;
   
   double CalcTrr(bool succeeded);
   double ResetTrr();

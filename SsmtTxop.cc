@@ -22,7 +22,7 @@ namespace ns3 {
 NS_LOG_COMPONENT_DEFINE("SsmtTxop");
 NS_OBJECT_ENSURE_REGISTERED(SsmtTxop);
 
-SsmtTxop::SsmtTxop() : numf_(0), trr_(1.0), trr_c_(0.0) {
+SsmtTxop::SsmtTxop() : numf_(0), trr_(0.0), trr_alpha_(0.0), trr_phi_(0.985) {
   NS_LOG_FUNCTION(this);
 }
 
@@ -70,6 +70,7 @@ void SsmtTxop::GotAck() {
     ResetCw();
     CalcTrr(true);
     StartBackoffNow((GetMinCw() + 1) / 2);
+    NS_LOG_DEBUG ("[" << Simulator::Now() << "]SSMT Got Ack " << numf_ << " +" << m_backoffSlots);
     RestartAccessIfNeeded();
   } else {
     NS_LOG_WARN ("got ack. tx not done, size=" << m_currentPacket->GetSize ());
@@ -81,6 +82,7 @@ void SsmtTxop::MissedAck() {
   NS_LOG_DEBUG ("missed ack");
   if (!NeedDataRetransmission (m_currentPacket, m_currentHdr)) {
     NS_LOG_DEBUG ("Ack Fail");
+    NS_LOG_INFO ("[" << Simulator::Now() << "]SSMT Gave up " << numf_);
     m_stationManager->ReportFinalDataFailed (m_currentHdr.GetAddr1 (), &m_currentHdr,
                                              m_currentPacket->GetSize ());
     if (!m_txFailedCallback.IsNull ()) {
@@ -136,18 +138,18 @@ void SsmtTxop::EndTxNoAck () {
 
 double SsmtTxop::CalcTrr(bool succeeded) {
   if (succeeded) {
-    trr_ = (1.0 - trr_c_) * trr_ + trr_c_;
+    trr_ = (1.0 - trr_alpha_) * trr_ + trr_alpha_ * trr_phi_;
     // trr_ = std::min(trr_ + 0.3, 1.0);
     // trr_ = 1.0;
   } else {
-    trr_ = std::max(0.0, trr_c_ * trr_ * trr_ * trr_ * trr_);
+    trr_ = trr_ * trr_ * trr_ * trr_;
     // trr_ = 0.0;
   }
   return trr_;
 }
 
 double SsmtTxop::ResetTrr() {
-  trr_ = 1.0 - trr_c_;
+  trr_ = 0.0;
   // trr_ = 0.7;
   return trr_;
 }
