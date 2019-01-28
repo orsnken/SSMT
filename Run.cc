@@ -76,12 +76,18 @@ ApplicationContainer SetApplication(
 
 void Framework::Simulation::Init(int argc, char* argv[]) {
   CommandLine cmd;
+
   cmd.Parse(argc, argv);
   
   Config::SetDefault("ns3::WifiRemoteStationManager::RtsCtsThreshold", UintegerValue(2200));
 
+  Config::SetDefault("ns3::SsmtTxop::Alpha", DoubleValue(0.0));
+  Config::SetDefault("ns3::SsmtTxop::Psi"  , DoubleValue(6.0));
+  Config::SetDefault("ns3::SsmtTxop::Zeta" , DoubleValue(0.9));
+
   LogComponentEnable("SsmtTxop", LOG_INFO);
   LogComponentEnable("SsmtTxop", LOG_WARN);
+
   // LogComponentEnable("Txop", LOG_LEVEL_FUNCTION);
 
   Domain::Init();
@@ -100,20 +106,12 @@ void Framework::Simulation::Run() {
   network2.ConfigureMobility(Vector3D(distance, 0.0, 0.0), 0.5);
   SetApplication(network2, 2001, 0.1, 4.9);
 
-  // Domain network3("Network 3", "192.168.3.0", "255.255.255.0", 1);
-  // network3.ConfigureMobility(Vector3D(distance / 2.0, distance / 2.0 * 1.7320508, 0.0), 0.5);
-  // SetApplication(network3, 3001, 0.1, 4.9);
+  Domain network3("Network 3", "192.168.3.0", "255.255.255.0", 1);
+  network3.ConfigureMobility(Vector3D(distance / 2.0, distance / 2.0 * 1.7320508, 0.0), 0.5);
+  SetApplication(network3, 3001, 0.1, 4.9);
 
-  // Domain network4("Network 4", "192.168.4.0", "255.255.255.0", 2);
-  // network4.ConfigureMobility(Vector3D(15.0, 15.0, 0.0), 0.5);
-  // SetApplication(network4, 4001, 0.1, 4.9);
-
-  // Domain network5("Network 5", "192.168.5.0", "255.255.255.0", 1);
-  // network5.ConfigureMobility(Vector3D(20.0, 0.0, 0.0), 0.5);
-  // SetApplication(network5, 5001, 0.1, 4.9);
-
-  // AnimationInterface anim("SSMT-anim.xml");
-  // anim.EnablePacketMetadata();
+  AnimationInterface anim("SSMT-anim.xml");
+  anim.EnablePacketMetadata();
 
   FlowMonitorHelper flowMonitor;
   Ptr<FlowMonitor> fm = flowMonitor.InstallAll();
