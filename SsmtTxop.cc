@@ -16,13 +16,18 @@
 #undef  NS_LOG_APPEND_CONTEXT
 #define NS_LOG_APPEND_CONTEXT if (m_low != 0) { std::clog << "[mac=" << m_low->GetAddress () << "] "; }
 
-
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE("SsmtTxop");
 NS_OBJECT_ENSURE_REGISTERED(SsmtTxop);
 
-SsmtTxop::SsmtTxop() : numf_(0), trr_(0.0), trr_alpha_(0.0), trr_phi_(0.985) {
+SsmtTxop::SsmtTxop() :
+numf_(0),
+trr_(0.0),
+trr_alpha_(0.0),
+trr_phi_(0.0),
+trr_psi_(0.0),
+trr_zeta_(0.0) {
   NS_LOG_FUNCTION(this);
 }
 
@@ -30,12 +35,40 @@ SsmtTxop::~SsmtTxop() {
   NS_LOG_FUNCTION(this);
 }
 
+TypeId SsmtTxop::GetTypeId() {
+  static TypeId tid = TypeId("ns3::SsmtTxop")
+    .SetParent<ns3::Txop>()
+    .SetGroupName("Wifi")
+    .AddConstructor<SsmtTxop>()
+    .AddAttribute ("Alpha", "The coefficient for a successful transmission.",
+                   DoubleValue(0.8),
+                   MakeDoubleAccessor(&SsmtTxop::SetAlpha,
+                                      &SsmtTxop::GetAlpha),
+                   MakeDoubleChecker<double>())
+    .AddAttribute ("Psi", "The exponent value for a failed transmission.",
+                   DoubleValue(6.0),
+                   MakeDoubleAccessor(&SsmtTxop::SetPsi,
+                                      &SsmtTxop::GetPsi),
+                   MakeDoubleChecker<double>())
+    .AddAttribute ("Zeta", "The deterministic back-off probability for the first failed transmission.",
+                   DoubleValue(0.9),
+                   MakeDoubleAccessor(&SsmtTxop::SetZeta,
+                                      &SsmtTxop::GetZeta),
+                   MakeDoubleChecker<double>());
+  return tid;
+}
+
 void SsmtTxop::DoDispose() {
   NS_LOG_FUNCTION(this);
   Txop::DoDispose();
 }
 
-void SsmtTxop::MissedCts () {
+void SsmtTxop::DoInitialize() {
+  NS_LOG_FUNCTION(this);
+  Txop::DoInitialize();
+}
+
+void SsmtTxop::MissedCts() {
   NS_LOG_FUNCTION (this);
   NS_LOG_WARN ("missed cts");
   if (!NeedRtsRetransmission (m_currentPacket, m_currentHdr)) {
@@ -98,7 +131,7 @@ void SsmtTxop::MissedAck() {
     m_currentHdr.SetRetry ();
     UpdateFailedCw ();
     if (CalcTrr(false) > m_rng->GetValue(0.0, 1.0)) {
-      StartBackoffNow((GetMinCw() + 1) / 2);
+      StartBackoffNow((GetMinCw() + 1) / 2 * pow(2.0, numf_));
       NS_LOG_INFO ("[" << Simulator::Now() << "]SSMT Try " << numf_ << " +" << m_backoffSlots);
     } else {
       ResetTrr();
@@ -136,21 +169,22 @@ void SsmtTxop::EndTxNoAck () {
   StartAccessIfNeeded ();
 }
 
+void SsmtTxop::CalcPhi() {
+  NS_LOG_FUNCTION(this);
+  trr_phi_ = std::pow(trr_zeta_, 1.0 / trr_psi_);
+}
+
 double SsmtTxop::CalcTrr(bool succeeded) {
   if (succeeded) {
     trr_ = (1.0 - trr_alpha_) * trr_ + trr_alpha_ * trr_phi_;
-    // trr_ = std::min(trr_ + 0.3, 1.0);
-    // trr_ = 1.0;
   } else {
-    trr_ = trr_ * trr_ * trr_ * trr_;
-    // trr_ = 0.0;
+    trr_ = std::pow(trr_, trr_psi_);
   }
   return trr_;
 }
 
 double SsmtTxop::ResetTrr() {
   trr_ = 0.0;
-  // trr_ = 0.7;
   return trr_;
 }
 
