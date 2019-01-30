@@ -8,6 +8,7 @@
 #include <random>
 #include <sstream>
 #include <string>
+#include <vector>
 
 using namespace ns3;
 using namespace WirelessLan;
@@ -19,18 +20,28 @@ void output(FlowMonitorHelper& flowMonitor, Ptr<FlowMonitor> fm) {
   Ptr<Ipv4FlowClassifier> classifier = DynamicCast<Ipv4FlowClassifier>(flowMonitor.GetClassifier());
   std::map<FlowId, FlowMonitor::FlowStats> stats = fm->GetFlowStats();
   std::cout << "--------------------------------------" << std::endl;
-  double avr = 0.0;
-  int i = 0;
+  std::vector<double> throughputs_kbps;
   for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator iter = stats.begin(); iter != stats.end(); iter++) {
     Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow (iter->first);
-    double throughputKbps = iter->second.rxBytes * 8.0 / (iter->second.timeLastRxPacket.GetSeconds() - iter->second.timeFirstTxPacket.GetSeconds()) / 1024;
+    double throughput_kbps = iter->second.rxBytes * 8.0 / (iter->second.timeLastRxPacket.GetSeconds() - iter->second.timeFirstTxPacket.GetSeconds()) / 1024;
     NS_LOG_UNCOND("Flow ID: " << iter->first << " src addr " << t.sourceAddress << " dest addr " << t.destinationAddress);
-    NS_LOG_UNCOND("TP:" << throughputKbps << ", Tx:" << iter->second.txBytes << ", Rx:" << iter->second.rxBytes << ", LP:" << iter->second.lostPackets);
-    avr +=  throughputKbps;
-    i++;
+    NS_LOG_UNCOND("TP:" << throughput_kbps << ", Tx:" << iter->second.txBytes << ", Rx:" << iter->second.rxBytes << ", LP:" << iter->second.lostPackets);
+    throughputs_kbps.push_back(throughput_kbps);
   }
-  NS_LOG_UNCOND("SUM.: " << avr);
-  NS_LOG_UNCOND("AVR.: " << avr / i);
+  
+  double fairness = 0.0;
+  double total_throughput_kbps = 0.0;
+  
+  for (double v: throughputs_kbps) {
+    fairness += v * v;
+    total_throughput_kbps += v;
+  }
+  fairness = total_throughput_kbps * total_throughput_kbps / (static_cast<double>(throughputs_kbps.size()) * fairness);
+
+  NS_LOG_UNCOND("SUM.: " << total_throughput_kbps);
+  NS_LOG_UNCOND("AVR.: " << total_throughput_kbps / static_cast<double>(throughputs_kbps.size()));
+  NS_LOG_UNCOND("FRN.: " << fairness);
+
 }
 
 ApplicationContainer SetOnOffApplication(
@@ -110,8 +121,8 @@ void Framework::Simulation::Run() {
   network3.ConfigureMobility(Vector3D(distance / 2.0, distance / 2.0 * 1.7320508, 0.0), 0.5);
   SetApplication(network3, 3001, 0.1, 4.9);
 
-  AnimationInterface anim("SSMT-anim.xml");
-  anim.EnablePacketMetadata();
+  // AnimationInterface anim("SSMT-anim.xml");
+  // anim.EnablePacketMetadata();
 
   FlowMonitorHelper flowMonitor;
   Ptr<FlowMonitor> fm = flowMonitor.InstallAll();
