@@ -2,16 +2,15 @@
 #define INCLUDED_WIRELESS_LAN_H__
 
 #include "ns3.h"
+#include "WifiCeHelper.h"
 
 #include <string>
 #include <vector>
 
 namespace WirelessLan {
 
-class Domain {
+class Domain : public ns3::Object {
 public:
-  static void Init();
-
   Domain(
     std::string ssid,
     std::string network_addr,
@@ -34,6 +33,15 @@ public:
   ns3::Ptr<ns3::Node> GetStaNode(int index) const;
 
   int GetN() const;
+
+  void Construct(
+    ns3::WifiCeHelper&  wifi,
+    ns3::WifiPhyHelper& phy,
+    const std::string& mac_ap_type,
+    ns3::WifiMacHelper& mac_ap,
+    const std::string& mac_sta_type,
+    ns3::WifiMacHelper& mac_sta
+  );
 private:
   int ch_;
   std::string naddr_;

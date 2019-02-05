@@ -5,12 +5,12 @@
 
 namespace Framework {
 
-inline void Simulation::SetSeed(int seed) {
-  seed_ = seed;
+inline int Simulation::GetSeed() const {
+  return seed_;
 }
 
-inline void Simulation::SetRunNumber(int run) {
-  run_ = run;
+inline int Simulation::GetRunNumber() const {
+  return run_;
 }
 
 } // namespace Framework

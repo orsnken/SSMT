@@ -11,9 +11,10 @@ public:
   void Run();
     // USER DEFINE
   
-  void Setup();
-  void SetSeed(int seed);
-  void SetRunNumber(int run);
+  void Setup(int seed, int run);
+
+  int GetSeed() const;
+  int GetRunNumber() const;
 private:
   int seed_;
   int run_;

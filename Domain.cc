@@ -1,56 +1,12 @@
 #include "ns3.h"
 #include "Domain.h"
-#include "PhyParameters.h"
 #include "WifiCeHelper.h"
 
 #include <cmath>
 
 using namespace ns3;
 
-namespace {
-
-ns3::WifiCeHelper          gWifiCeHelper;
-ns3::YansWifiPhyHelper     gPhyHelper;
-ns3::YansWifiChannelHelper gChannelHelper;
-
-const int gChanneNumber = 1;
-
-} // namespace *
-
 namespace WirelessLan {
-
-void Domain::Init() {
-  gWifiCeHelper.SetRemoteStationManager(
-    "ns3::ConstantRateWifiManager",
-    "DataMode"   , StringValue(kRemoteStationDataMode),
-    "ControlMode", StringValue(kRemoteStationControlMode)
-  );
-  gWifiCeHelper.SetStandard(kWifiPhyStandard);
-
-  gChannelHelper.SetPropagationDelay("ns3::ConstantSpeedPropagationDelayModel");
-  gChannelHelper.AddPropagationLoss(
-    "ns3::LogDistancePropagationLossModel",
-    "Exponent"         , DoubleValue(kLogDistancePropagationLossExponent),
-    "ReferenceDistance", DoubleValue(kLogDistancePropagationLossReferenceDistance),
-    "ReferenceLoss"    , DoubleValue(kLogDistancePropagationLossReferenceLoss)
-  );
-  gChannelHelper.AddPropagationLoss(
-    "ns3::NakagamiPropagationLossModel",
-    "Distance1", DoubleValue(kNakagamiPropagationLossDistance1),
-    "Distance2", DoubleValue(kNakagamiPropagationLossDistance2),
-    "m0", DoubleValue(kNakagamiPropagationLossM0),
-    "m1", DoubleValue(kNakagamiPropagationLossM1),
-    "m2", DoubleValue(kNakagamiPropagationLossM2)
-  );
-
-  gPhyHelper = YansWifiPhyHelper::Default();
-  gPhyHelper.SetPcapDataLinkType(kPhyPcapDlt);
-  gPhyHelper.SetChannel(gChannelHelper.Create());
-  gPhyHelper.Set("EnergyDetectionThreshold", DoubleValue(kPhyEnergyDetectionThreshold));
-  gPhyHelper.Set("CcaMode1Threshold"       , DoubleValue(kPhyCcaMode1Threshold));
-  gPhyHelper.Set("TxPowerStart"            , DoubleValue(kPhyTxPowerStart));
-  gPhyHelper.Set("TxPowerEnd"              , DoubleValue(kPhyTxPowerEnd));
-}
 
 Domain::Domain(
   std::string ssid,
@@ -61,32 +17,6 @@ Domain::Domain(
   ssid_ = Ssid(ssid);
   apNodes_.Create(1);
   staNodes_.Create(n);
-
-  gPhyHelper.Set("ChannelNumber", UintegerValue(gChanneNumber));
-
-  WifiMacHelper mac_ap;
-  mac_ap.SetType(
-    "ns3::SsmtApWifiMac",
-    "Ssid", SsidValue(ssid_)
-  );
-  apDevs_ = gWifiCeHelper.Install(gPhyHelper, mac_ap, apNodes_);
-
-  WifiMacHelper mac_sta;
-  mac_sta.SetType(
-    "ns3::SsmtStaWifiMac",
-    "ActiveProbing", BooleanValue(false),
-    "Ssid", SsidValue(ssid_)
-  );
-  staDevs_ = gWifiCeHelper.Install(gPhyHelper, mac_sta, staNodes_);
-
-  InternetStackHelper stack;
-  stack.Install(apNodes_);
-  stack.Install(staNodes_);
-
-  Ipv4AddressHelper ipv4Network;
-  ipv4Network.SetBase(naddr_.c_str(), smask_.c_str());
-  ipv4Network.Assign(apDevs_);
-  ipv4Network.Assign(staDevs_);
 }
 
 void Domain::ConfigureMobility(
@@ -123,6 +53,36 @@ void Domain::ConfigureMobility(
   mobility.Install(apNodes_);
   mobility.SetPositionAllocator(position_sta);
   mobility.Install(staNodes_);
+}
+
+void Domain::Construct(
+  ns3::WifiCeHelper&  wifi,
+  ns3::WifiPhyHelper& phy,
+  const std::string& mac_ap_type,
+  ns3::WifiMacHelper& mac_ap,
+  const std::string& mac_sta_type,
+  ns3::WifiMacHelper& mac_sta
+) {
+  mac_ap.SetType(
+    mac_ap_type.c_str(),
+    "Ssid", SsidValue(ssid_)
+  );
+  apDevs_ = wifi.Install(phy, mac_ap, apNodes_);
+
+  mac_sta.SetType(
+    mac_sta_type.c_str(),
+    "Ssid", SsidValue(ssid_)
+  );
+  staDevs_ = wifi.Install(phy, mac_sta, staNodes_);
+
+  InternetStackHelper stack;
+  stack.Install(apNodes_);
+  stack.Install(staNodes_);
+
+  Ipv4AddressHelper ipv4Network;
+  ipv4Network.SetBase(naddr_.c_str(), smask_.c_str());
+  ipv4Network.Assign(apDevs_);
+  ipv4Network.Assign(staDevs_);
 }
 
 } // namespace WirelessLan

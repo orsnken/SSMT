@@ -11,11 +11,18 @@ using namespace ns3;
 Simulation::Simulation() {
   std::random_device rnd;
   std::mt19937 mt(rnd());
-  seed_ = mt() + 1;
-  run_  = mt() + 1;
+  std::uniform_int_distribution<> rand1000(0, 1000);
+  seed_ = rand1000(mt) + 1;
+  run_  = rand1000(mt) + 1;
 }
 
-void Simulation::Setup() {
+void Simulation::Setup(int seed = 0, int run = 0) {
+  if (seed != 0) {
+    seed_ = seed;
+  }
+  if (run != 0) {
+    run_ = run;
+  }
   RngSeedManager::SetSeed(seed_);
   RngSeedManager::SetRun(run_);
 }
