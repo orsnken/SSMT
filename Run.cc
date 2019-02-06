@@ -4,6 +4,8 @@
 #include "Simulation.h"
 #include "SsmtTxop.h"
 #include "WifiCeHelper.h"
+#include "VcwApWifiMac.h"
+#include "VcwStaWifiMac.h"
 
 #include <fstream>
 #include <iomanip>
@@ -24,7 +26,7 @@ int gSeed = 0;
 int gRun  = 0;
 
 double gDistanceWlans     = 10.0;
-double gDistanceTerminals = 0.5;
+double gDistanceTerminals = 0.3;
 
 double gSsmtAlpha = 0.8;
 double gSsmtPsi   = 4.0;
@@ -114,7 +116,7 @@ void InitDomains(
   WifiMacHelper& mac_sta) {
   Ptr<Domain> network = 0;
 
-  network = Create<Domain>("Network 1", "192.168.1.0", "255.255.255.0", 1);
+  network = Create<Domain>("Network 1", "192.168.1.0", "255.255.255.0", 2);
   network->Construct(gWifiCeHelper, gWifiPhyHelper, mac_ap_type, mac_ap, mac_sta_type, mac_sta);
   gDomains.push_back(network);
 
@@ -125,13 +127,14 @@ void InitDomains(
   // network = Create<Domain>("Network 3", "192.168.3.0", "255.255.255.0", 1);
   // network->Construct(gWifiCeHelper, gWifiPhyHelper, mac_ap_type, mac_ap, mac_sta_type, mac_sta);
   // gDomains.push_back(network);
-
+  
+  double offset = 50.0;
   ApplicationContainer app;
-  gDomains[0]->ConfigureMobility(Vector3D(0.0, 0.0, 0.0), gDistanceTerminals);
-  SetApplication(*(gDomains[0]), 1001).Start(Seconds(0.5));
-  gDomains[1]->ConfigureMobility(Vector3D(gDistanceWlans, 0.0, 0.0), gDistanceTerminals);
-  SetApplication(*(gDomains[1]), 2001).Start(Seconds(0.1));
-  // gDomains[2]->ConfigureMobility(Vector3D(gDistanceWlans / 2.0, gDistanceWlans / 2.0 * 1.7320508, 0.0), gDistanceTerminals);
+  gDomains[0]->ConfigureMobility(Vector3D(offset, offset, offset), gDistanceTerminals);
+  app.Add(SetApplication(*(gDomains[0]), 1001));
+  gDomains[1]->ConfigureMobility(Vector3D(offset + gDistanceWlans, offset, offset), gDistanceTerminals);
+  app.Add(SetApplication(*(gDomains[1]), 2001));
+  // gDomains[2]->ConfigureMobility(Vector3D(offset + gDistanceWlans / 2.0, offset + gDistanceWlans / 2.0 * 1.7320508, offset), gDistanceTerminals);
   // app.Add(SetApplication(*(gDomains[2]), 3001));
   
   // Ptr<UniformRandomVariable> rv = CreateObject<UniformRandomVariable>();
@@ -139,6 +142,9 @@ void InitDomains(
   // rv->SetAttribute("Max", DoubleValue(1.00));
   // app.StartWithJitter(Seconds(0.1), rv);
   // app.Stop(Seconds(9.9));
+
+  app.Start(Seconds(0.1));
+  app.Stop(Seconds(9.9));
 }
 
 void InitMacWithSsmt() {
@@ -205,9 +211,7 @@ void InitMacWithCwOnly() {
   WifiMacHelper mac_sta;
   mac_sta.SetType(
     kMacStaType,
-    "ActiveProbing", BooleanValue(false),
-    "VcwMinCw", IntegerValue(1),
-    "VcwMaxCw", IntegerValue(2)
+    "ActiveProbing", BooleanValue(false)
   );
 
   InitDomains(kMacApType, mac_ap, kMacStaType, mac_sta);
@@ -215,14 +219,19 @@ void InitMacWithCwOnly() {
   // ----
   // Direct Configure Process
   // ----
+  int cw_assets[3 + 1][2] = {
+    {-1, -1},  // NO STATION !!
+    { 1, 31},  // STA 1
+    { 3, 63},  // STA 2
+    { 7, 127}, // STA 3
+  };
   for (int i = 0, n = gDomains.size(); i < n; i++) {
-    Ptr<WifiNetDevice> wifi_dev = DynamicCast<WifiNetDevice>(gDomains[i]->GetApNode()->GetDevice(0));
-    Ptr<WifiMac> wifi_mac = wifi_dev->GetMac();
-    Ptr<Txop> txop;
-    PointerValue ptr;
-    wifi_mac->GetAttribute("Txop", ptr);
-    txop = ptr.Get<Txop>();
-    txop->SetMinCw(1);
+    for (int j = 0, stan = gDomains[i]->GetN() - 1; j < stan; j++) {
+      Ptr<WifiNetDevice> wifi_dev = DynamicCast<WifiNetDevice>(gDomains[i]->GetStaNode(j)->GetDevice(0));
+      Ptr<VcwStaWifiMac> wifi_mac = DynamicCast<VcwStaWifiMac>(wifi_dev->GetMac());
+      wifi_mac->SetAttribute("VcwMinCw", IntegerValue(cw_assets[stan][0]));
+      wifi_mac->SetAttribute("VcwMaxCw", IntegerValue(cw_assets[stan][1]));
+    }
   }
 }
 
@@ -313,7 +322,7 @@ void Framework::Simulation::Init(int argc, char* argv[]) {
   if (gEnableLogComponents) {
     LogComponentEnable("SsmtTxop", LOG_INFO);
     LogComponentEnable("SsmtTxop", LOG_WARN);
-    LogComponentEnable("Txop", LOG_INFO);
+    // LogComponentEnable("Txop", LOG_INFO);
     LogComponentEnable("VcwStaWifiMac", LOG_INFO);
   }
 
