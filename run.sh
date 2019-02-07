@@ -20,7 +20,7 @@ mac_type=("SSMT_CI" "SRB" "DCF" "CW_ONLY")
 
 for mt in ${mac_type[@]}
 do
-  for i in `seq 1`
+  for i in `seq 1 10`
   do
     echo "---------------------------"
     echo "[$i]$mt proc..."
@@ -32,5 +32,3 @@ do
     echo "[$i]$mt done!"
   done
 done
-
-
