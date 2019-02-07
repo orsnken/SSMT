@@ -85,10 +85,10 @@ static const double kLogDistancePropagationLossReferenceLoss = 40.045997;
 // ------------------------------------------------
 // Nakagami Propagation Model Setting
 // ------------------------------------------------
-static const double kNakagamiPropagationLossDistance1 = 80.0;
-static const double kNakagamiPropagationLossDistance2 = 200.0;
-static const double kNakagamiPropagationLossM0 = 1.50;
-static const double kNakagamiPropagationLossM1 = 0.75;
+static const double kNakagamiPropagationLossDistance1 = 1.0;
+static const double kNakagamiPropagationLossDistance2 = 80.0;
+static const double kNakagamiPropagationLossM0 = 5.00;
+static const double kNakagamiPropagationLossM1 = 1.50;
 static const double kNakagamiPropagationLossM2 = 0.75;
 // ------------------------------------------------
 

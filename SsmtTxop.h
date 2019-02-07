@@ -23,9 +23,6 @@ public:
 
   // @Override
   virtual void MissedAck();
-  
-  // @Override
-  virtual void NotifyCollision();
 
   // @Override
   virtual void NotifyInternalCollision();
@@ -50,6 +47,11 @@ public:
   double GetPsi() const;
 
   double GetZeta() const;
+
+protected:
+  // @Override
+  virtual void NotifyCollision();
+
 private:
   int numf_;
 

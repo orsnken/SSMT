@@ -21,6 +21,7 @@ using namespace WirelessLan;
 namespace {
 
 bool gEnableLogComponents = false;
+bool gEnableOutputFile = false;
 
 int gSeed = 0;
 int gRun  = 0;
@@ -28,9 +29,12 @@ int gRun  = 0;
 double gDistanceWlans     = 10.0;
 double gDistanceTerminals = 0.3;
 
+double gSimulationBeginSec = 0.0;
+double gSimulationEndSec   = 10.0;
+
 double gSsmtAlpha = 0.8;
-double gSsmtPsi   = 4.0;
-double gSsmtZeta  = 0.974;
+double gSsmtPsi   = 6.0;
+double gSsmtZeta  = 0.963;
 
 ns3::WifiCeHelper          gWifiCeHelper;
 ns3::YansWifiPhyHelper     gWifiPhyHelper;
@@ -39,6 +43,19 @@ ns3::YansWifiChannelHelper gWifiChannelHelper;
 std::string gMacType = "SSMT_CI";
 
 std::vector<Ptr<Domain>> gDomains;
+
+std::string GenerateFilename() {
+  std::string filename = "scratch/SSMT/output/";
+  filename += gMacType;
+  filename += "_D" + std::to_string(static_cast<int>(gDistanceWlans));
+  if (gMacType == "SSMT_CI") {
+    filename += "_A" + std::to_string(gSsmtAlpha);
+    filename += "_P" + std::to_string(gSsmtPsi);
+    filename += "_Z" + std::to_string(gSsmtZeta);
+  }
+  filename += ".csv";
+  return filename;
+}
 
 ApplicationContainer SetOnOffApplication(
   Ptr<Node> src,
@@ -71,7 +88,6 @@ ApplicationContainer SetApplication(
     // app.Add(SetApplication(domain.GetStaNode(i), domain.GetApNode(), port + i));
     app.Add(SetOnOffApplication(domain.GetStaNode(i), domain.GetApNode(), port + i, "ns3::UdpSocketFactory"));
   }
-  
   return app;
 }
 
@@ -116,7 +132,7 @@ void InitDomains(
   WifiMacHelper& mac_sta) {
   Ptr<Domain> network = 0;
 
-  network = Create<Domain>("Network 1", "192.168.1.0", "255.255.255.0", 2);
+  network = Create<Domain>("Network 1", "192.168.1.0", "255.255.255.0", 1);
   network->Construct(gWifiCeHelper, gWifiPhyHelper, mac_ap_type, mac_ap, mac_sta_type, mac_sta);
   gDomains.push_back(network);
 
@@ -124,9 +140,9 @@ void InitDomains(
   network->Construct(gWifiCeHelper, gWifiPhyHelper, mac_ap_type, mac_ap, mac_sta_type, mac_sta);
   gDomains.push_back(network);
 
-  // network = Create<Domain>("Network 3", "192.168.3.0", "255.255.255.0", 1);
-  // network->Construct(gWifiCeHelper, gWifiPhyHelper, mac_ap_type, mac_ap, mac_sta_type, mac_sta);
-  // gDomains.push_back(network);
+  network = Create<Domain>("Network 3", "192.168.3.0", "255.255.255.0", 1);
+  network->Construct(gWifiCeHelper, gWifiPhyHelper, mac_ap_type, mac_ap, mac_sta_type, mac_sta);
+  gDomains.push_back(network);
   
   double offset = 50.0;
   ApplicationContainer app;
@@ -134,17 +150,11 @@ void InitDomains(
   app.Add(SetApplication(*(gDomains[0]), 1001));
   gDomains[1]->ConfigureMobility(Vector3D(offset + gDistanceWlans, offset, offset), gDistanceTerminals);
   app.Add(SetApplication(*(gDomains[1]), 2001));
-  // gDomains[2]->ConfigureMobility(Vector3D(offset + gDistanceWlans / 2.0, offset + gDistanceWlans / 2.0 * 1.7320508, offset), gDistanceTerminals);
-  // app.Add(SetApplication(*(gDomains[2]), 3001));
-  
-  // Ptr<UniformRandomVariable> rv = CreateObject<UniformRandomVariable>();
-  // rv->SetAttribute("Min", DoubleValue(0.01));
-  // rv->SetAttribute("Max", DoubleValue(1.00));
-  // app.StartWithJitter(Seconds(0.1), rv);
-  // app.Stop(Seconds(9.9));
+  gDomains[2]->ConfigureMobility(Vector3D(offset + gDistanceWlans / 2.0, offset + gDistanceWlans / 2.0 * 1.7320508, offset), gDistanceTerminals);
+  app.Add(SetApplication(*(gDomains[2]), 3001));
 
-  app.Start(Seconds(0.1));
-  app.Stop(Seconds(9.9));
+  app.Start(Seconds(gSimulationBeginSec + 0.1));
+  app.Stop(Seconds(gSimulationEndSec - 0.1));
 }
 
 void InitMacWithSsmt() {
@@ -166,19 +176,6 @@ void InitMacWithSsmt() {
   );
 
   InitDomains(kMacApType, mac_ap, kMacStaType, mac_sta);
-
-  // ----
-  // Direct Configure Process
-  // ----
-  // for (int i = 0, n = gDomains.size(); i < n; i++) {
-  //   Ptr<WifiNetDevice> wifi_dev = DynamicCast<WifiNetDevice>(gDomains[i]->GetStaNode(0)->GetDevice(0));
-  //   Ptr<WifiMac> wifi_mac = wifi_dev->GetMac();
-  //   Ptr<SsmtTxop> txop;
-  //   PointerValue ptr;
-  //   wifi_mac->GetAttribute("Txop", ptr);
-  //   txop = ptr.Get<SsmtTxop>();
-  //   txop->SetAlpha(0.0);
-  // }
 }
 
 void InitMacWithSrb() {
@@ -278,9 +275,39 @@ void Output(FlowMonitorHelper& flowMonitor, Ptr<FlowMonitor> fm) {
   NS_LOG_UNCOND("SUM.: " << total_throughput_kbps);
   NS_LOG_UNCOND("AVR.: " << total_throughput_kbps / static_cast<double>(throughputs_kbps.size()));
   NS_LOG_UNCOND("FRN.: " << fairness);
-
 }
 
+void OutputFile(const Framework::Simulation& sim, FlowMonitorHelper& flowMonitor, Ptr<FlowMonitor> fm) {
+  std::string filename = GenerateFilename();
+  std::ofstream ofs(filename, std::ios::app);
+  if (!ofs) {
+    NS_LOG_UNCOND("Can not open the file :" << filename << ".");
+    return;
+  }
+  ofs << sim.GetSeed() << "," << sim.GetRunNumber() << ",";
+    // output seed and run number.
+
+  fm->CheckForLostPackets ();
+  Ptr<Ipv4FlowClassifier> classifier = DynamicCast<Ipv4FlowClassifier>(flowMonitor.GetClassifier());
+  std::map<FlowId, FlowMonitor::FlowStats> stats = fm->GetFlowStats();
+  std::vector<double> throughputs_kbps;
+  for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator iter = stats.begin(); iter != stats.end(); iter++) {
+    double throughput_kbps = iter->second.rxBytes * 8.0 / (iter->second.timeLastRxPacket.GetSeconds() - iter->second.timeFirstTxPacket.GetSeconds()) / 1024;
+    throughputs_kbps.push_back(throughput_kbps);
+  }
+  
+  double fairness = 0.0;
+  double total_throughput_kbps = 0.0;
+  for (double v: throughputs_kbps) {
+    fairness += v * v;
+    total_throughput_kbps += v;
+  }
+  fairness = total_throughput_kbps * total_throughput_kbps / (static_cast<double>(throughputs_kbps.size()) * fairness);
+  // ofs << (total_throughput_kbps / static_cast<double>(throughputs_kbps.size())) << "," << fairness << std::endl;
+  ofs << total_throughput_kbps << "," << fairness << std::endl;
+  ofs.close();
+  NS_LOG_UNCOND("Output file done. > " << filename);
+}
 
 } // namespace
 
@@ -295,6 +322,9 @@ void Framework::Simulation::Init(int argc, char* argv[]) {
   cmd.AddValue("EnableLogComponents",
                "Enable log function.",
                gEnableLogComponents);
+  cmd.AddValue("EnableOutputFile",
+               "Enable output-file.",
+               gEnableOutputFile);
   cmd.AddValue("MacType",
                "The MAC algorithm applied with each terminals (SSMT_CI/SRB/CW_ONLY/DCF).",
                gMacType);
@@ -304,6 +334,9 @@ void Framework::Simulation::Init(int argc, char* argv[]) {
   cmd.AddValue("SimSeed",
                "The seed for RndManager. Set to 0 if you want to initialize with a random stream.",
                gSeed);
+  cmd.AddValue("SimTime",
+               "How long does simulation last? (sec)",
+               gSimulationEndSec);
   cmd.AddValue("SsmtAlpha",
                "The parameter associated with a successful transmission behavior for SSMT/CI.",
                gSsmtAlpha);
@@ -321,9 +354,13 @@ void Framework::Simulation::Init(int argc, char* argv[]) {
   
   if (gEnableLogComponents) {
     LogComponentEnable("SsmtTxop", LOG_INFO);
-    LogComponentEnable("SsmtTxop", LOG_WARN);
+    // LogComponentEnable("SsmtTxop", LOG_WARN);
     // LogComponentEnable("Txop", LOG_INFO);
-    LogComponentEnable("VcwStaWifiMac", LOG_INFO);
+    // LogComponentEnable("Txop", LOG_FUNCTION);
+    // LogComponentEnable("ChannelAccessManager", LOG_DEBUG);
+    // LogComponentEnable("ChannelAccessManager", LOG_FUNCTION);
+    // LogComponentEnable("VcwStaWifiMac", LOG_INFO);
+    // LogComponentEnable("PropagationLossModel", LOG_DEBUG);
   }
 
   InitMac();
@@ -350,9 +387,13 @@ void Framework::Simulation::Run() {
   FlowMonitorHelper flowMonitor;
   Ptr<FlowMonitor> fm = flowMonitor.InstallAll();
 
-  Simulator::Stop(Seconds(10));
+  Simulator::Stop(Seconds(gSimulationEndSec));
   Simulator::Run();
   Simulator::Destroy();
 
-  Output(flowMonitor, fm);
+  if (gEnableOutputFile) {
+    OutputFile(*this, flowMonitor, fm);
+  } else {
+    Output(flowMonitor, fm);
+  }
 }
