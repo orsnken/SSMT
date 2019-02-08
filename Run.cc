@@ -140,7 +140,7 @@ void InitDomains(
   network->Construct(gWifiCeHelper, gWifiPhyHelper, mac_ap_type, mac_ap, mac_sta_type, mac_sta);
   gDomains.push_back(network);
 
-  network = Create<Domain>("Network 3", "192.168.3.0", "255.255.255.0", 1);
+  network = Create<Domain>("Network 3", "192.168.3.0", "255.255.255.0", 2);
   network->Construct(gWifiCeHelper, gWifiPhyHelper, mac_ap_type, mac_ap, mac_sta_type, mac_sta);
   gDomains.push_back(network);
   
