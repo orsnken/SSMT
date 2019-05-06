@@ -70,7 +70,7 @@ ApplicationContainer SetOnOffApplication(
   ftp.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
   ftp.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
   ftp.SetAttribute("DataRate", StringValue("50Mbps"));
-  ftp.SetAttribute("PacketSize", UintegerValue(1472));
+  ftp.SetAttribute("PacketSize", UintegerValue(1464));
   ftp.SetAttribute("Remote", AddressValue(remote_sock_addr));
   ApplicationContainer app = ftp.Install(src);
   PacketSinkHelper sink_helper(protocol, Address(remote_sock_addr));
@@ -145,7 +145,7 @@ void InitDomains(
   gDomains.push_back(network);
   
   ApplicationContainer app;
-  // true triang
+  // true triang;e
   // gDomains[0]->ConfigureMobility(Vector3D(0.0, 0.0, 0.0), gDistanceTerminals);
   // app.Add(SetApplication(*(gDomains[0]), 1001));
   // gDomains[1]->ConfigureMobility(Vector3D(gDistanceWlans, 0.0, 0.0), gDistanceTerminals);
@@ -161,12 +161,13 @@ void InitDomains(
   // gDomains[2]->ConfigureMobility(Vector3D(2.5, gDistanceWlans, 0.0), gDistanceTerminals);
   // app.Add(SetApplication(*(gDomains[2]), 3001));
 
-  // hidden terminal
+  double r1 = gDistanceWlans / (3.0 + 1.7320508);
+  double r3 = 1.7320508 * r1;
   gDomains[0]->ConfigureMobility(Vector3D(0.0, 0.0, 0.0), gDistanceTerminals);
   app.Add(SetApplication(*(gDomains[0]), 1001));
-  gDomains[1]->ConfigureMobility(Vector3D(gDistanceWlans, 0.0, 0.0), gDistanceTerminals);
+  gDomains[1]->ConfigureMobility(Vector3D(r1, 0.0, 0.0), gDistanceTerminals);
   app.Add(SetApplication(*(gDomains[1]), 2001));
-  gDomains[2]->ConfigureMobility(Vector3D(gDistanceWlans * 2.0, 0.0, 0.0), gDistanceTerminals);
+  gDomains[2]->ConfigureMobility(Vector3D(0, r3, 0.0), gDistanceTerminals);
   app.Add(SetApplication(*(gDomains[2]), 3001));
 
   app.Start(Seconds(gSimulationBeginSec + 0.1));
@@ -334,11 +335,10 @@ void OutputFile(const Framework::Simulation& sim, FlowMonitorHelper& flowMonitor
   for (double v: throughputs_kbps) {
     fairness += v * v;
     total_throughput_kbps += v;
-    ofs << v / 1000 << ",";
   }
   fairness = total_throughput_kbps * total_throughput_kbps / (static_cast<double>(throughputs_kbps.size()) * fairness);
   // ofs << (total_throughput_kbps / static_cast<double>(throughputs_kbps.size())) << "," << fairness << std::endl;
-  ofs << total_throughput_kbps / 1000 << "," << fairness << std::endl;
+  ofs << total_throughput_kbps << "," << fairness << std::endl;
   ofs.close();
   NS_LOG_UNCOND("Output file done. > " << filename);
 }
